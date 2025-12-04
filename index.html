@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager — Plan. Focus. Achieve.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Task Manager</h1>
+            <p class="subtitle">Plan. Focus. Achieve.</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <form id="taskForm">
+                    <input type="text" id="taskInput" placeholder="What needs to be done?" autocomplete="off" required>
+                    <button type="submit" class="add-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Task
+                    </button>
+                </form>
+            </section>
+
+            <section class="controls-section">
+                <div class="filters">
+                    <button id="filterAll" class="filter-btn active">All</button>
+                    <button id="filterPending" class="filter-btn">Pending</button>
+                    <button id="filterCompleted" class="filter-btn">Completed</button>
+                </div>
+                <div id="taskStats" class="stats">
+                    <!-- Stats will be populated by JS -->
+                    <span>0 tasks remaining</span>
+                </div>
+            </section>
+
+            <section class="list-section">
+                <div id="taskList" class="task-list">
+                    <!-- Tasks will be injected here by app.js -->
+                    
+                    <!-- Example Task Structure (Hidden/Commented for reference) -->
+                    <!--
+                    <div class="task" data-id="1">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" data-action="toggle">
+                            <span class="checkmark"></span>
+                        </label>
+                        <span class="text">Complete the UI design</span>
+                        <button class="delete-btn" data-action="delete" aria-label="Delete task">✕</button>
+                    </div>
+                    <div class="task completed" data-id="2">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" data-action="toggle" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <span class="text">Draft implementation plan</span>
+                        <button class="delete-btn" data-action="delete" aria-label="Delete task">✕</button>
+                    </div>
+                    -->
+                </div>
+                
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <p>No tasks yet. Add one above!</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>© 2025 Task Manager. Built with Antigravity.</p>
+        </footer>
+    </div>
+
+    <!-- Required Scripts -->
+    <script src="antigravity.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
