@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,11 +10,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
     <div class="app-container">
         <header class="app-header">
-            <h1>Task Manager</h1>
+            <div class="header-content">
+                <h1>Task Manager</h1>
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
             <p class="subtitle">Plan. Focus. Achieve.</p>
         </header>
 
@@ -22,7 +46,11 @@
                 <form id="taskForm">
                     <input type="text" id="taskInput" placeholder="What needs to be done?" autocomplete="off" required>
                     <button type="submit" class="add-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
                         Add Task
                     </button>
                 </form>
@@ -43,7 +71,7 @@
             <section class="list-section">
                 <div id="taskList" class="task-list">
                     <!-- Tasks will be injected here by app.js -->
-                    
+
                     <!-- Example Task Structure (Hidden/Commented for reference) -->
                     <!--
                     <div class="task" data-id="1">
@@ -64,7 +92,7 @@
                     </div>
                     -->
                 </div>
-                
+
                 <div class="empty-state" id="emptyState" style="display: none;">
                     <p>No tasks yet. Add one above!</p>
                 </div>
@@ -80,4 +108,5 @@
     <script src="antigravity.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
