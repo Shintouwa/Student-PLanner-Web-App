@@ -1,208 +1,213 @@
-/**
- * app.js - Core logic for Task Manager
- */
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Theme Management ---
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlElement = document.documentElement;
 
-(function () {
-    // --- State ---
-    let tasks = [];
-    let currentFilter = 'all'; // 'all', 'pending', 'completed'
+    // Check for saved theme preference or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // --- DOM Elements ---
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        htmlElement.setAttribute('data-theme', 'dark');
+        document.body.classList.add('dark-mode'); // For compatibility
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            if (newTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        });
+    }
+
+    // --- Priority UI Injection ---
     const taskForm = document.getElementById('taskForm');
+    let prioritySelect = document.getElementById('prioritySelect');
+
+    if (taskForm && !prioritySelect) {
+        // Create and inject priority select if it doesn't exist
+        const container = document.createElement('div');
+        container.className = 'priority-selector';
+        container.style.marginBottom = '10px';
+        container.style.marginTop = '10px';
+
+        const label = document.createElement('label');
+        label.textContent = 'Priority: ';
+        label.style.marginRight = '5px';
+        label.style.color = 'var(--text-color, inherit)';
+
+        prioritySelect = document.createElement('select');
+        prioritySelect.id = 'prioritySelect';
+        prioritySelect.innerHTML = `
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+        `;
+        prioritySelect.style.padding = '5px';
+        prioritySelect.style.borderRadius = '4px';
+
+        container.appendChild(label);
+        container.appendChild(prioritySelect);
+
+        // Insert before the submit button
+        const submitBtn = taskForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            taskForm.insertBefore(container, submitBtn);
+        } else {
+            taskForm.appendChild(container);
+        }
+    }
+
+    // --- Task Management ---
+
     const taskInput = document.getElementById('taskInput');
     const taskList = document.getElementById('taskList');
     const taskStats = document.getElementById('taskStats');
     const emptyState = document.getElementById('emptyState');
-    const filterButtons = {
-        all: document.getElementById('filterAll'),
-        pending: document.getElementById('filterPending'),
-        completed: document.getElementById('filterCompleted')
-    };
 
-    // --- Storage / Sync ---
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-    function loadTasksFromStorage() {
-        // Use antigravity.js API
-        if (window.ag && typeof window.ag.loadTasks === 'function') {
-            tasks = window.ag.loadTasks() || [];
-        } else {
-            // Fallback if ag is missing (though it shouldn't be)
-            console.warn('Antigravity API not found, falling back to localStorage');
-            const saved = localStorage.getItem('antigravity_tasks');
-            tasks = saved ? JSON.parse(saved) : [];
-        }
-    }
-
-    function saveTasksToStorage() {
-        // Use antigravity.js API
-        if (window.ag && typeof window.ag.saveTasks === 'function') {
-            window.ag.saveTasks(tasks);
-        } else {
-            console.warn('Antigravity API not found, falling back to localStorage');
-            localStorage.setItem('antigravity_tasks', JSON.stringify(tasks));
-        }
-    }
-
-    // --- Core Logic ---
-
-    function addTask(text) {
-        const trimmed = text.trim();
-        if (!trimmed) return;
-
-        const newTask = {
-            id: Date.now().toString(),
-            text: trimmed,
-            completed: false,
-            createdAt: Date.now()
-        };
-
-        tasks.push(newTask);
-        saveTasksToStorage();
-        renderTasks();
-        taskInput.value = '';
-    }
-
-    function toggleTask(id) {
-        const task = tasks.find(t => t.id === id);
-        if (!task) return;
-
-        task.completed = !task.completed;
-        saveTasksToStorage();
+    function saveTasks() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
         renderTasks();
     }
 
-    function deleteTask(id) {
-        tasks = tasks.filter(t => t.id !== id);
-        saveTasksToStorage();
-        renderTasks();
-    }
+    function renderTasks(filter = 'all') {
+        if (!taskList) return;
+        taskList.innerHTML = '';
 
-    function setFilter(filterType) {
-        currentFilter = filterType;
-
-        // Update active button state
-        Object.values(filterButtons).forEach(btn => btn.classList.remove('active'));
-        filterButtons[filterType].classList.add('active');
-
-        renderTasks();
-    }
-
-    // --- Rendering ---
-
-    function renderTasks() {
-        // 1. Filter tasks
         const filteredTasks = tasks.filter(task => {
-            if (currentFilter === 'pending') return !task.completed;
-            if (currentFilter === 'completed') return task.completed;
+            if (filter === 'pending') return !task.completed;
+            if (filter === 'completed') return task.completed;
             return true;
         });
 
-        // 2. Update Stats
-        const remaining = tasks.filter(t => !t.completed).length;
-        taskStats.innerHTML = `<span>${remaining} task${remaining !== 1 ? 's' : ''} remaining</span>`;
+        // Sort by Priority (High -> Medium -> Low)
+        const priorityRank = { high: 0, medium: 1, low: 2 };
+        filteredTasks.sort((a, b) => {
+            const pA = a.priority || 'medium';
+            const pB = b.priority || 'medium';
+            return priorityRank[pA] - priorityRank[pB];
+        });
 
-        // 3. Clear List
-        taskList.innerHTML = '';
-
-        // 4. Show/Hide Empty State
-        if (tasks.length === 0) {
-            emptyState.style.display = 'block';
-            taskList.style.display = 'none';
+        if (filteredTasks.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
         } else {
-            emptyState.style.display = 'none';
-            taskList.style.display = 'block';
+            if (emptyState) emptyState.style.display = 'none';
+
+            filteredTasks.forEach(task => {
+                const taskEl = document.createElement('div');
+                taskEl.className = `task ${task.completed ? 'completed' : ''}`;
+                taskEl.setAttribute('data-id', task.id);
+
+                // Priority Badge
+                const priority = task.priority || 'medium';
+                const priorityColor = priority === 'high' ? '#ffcccc' : (priority === 'medium' ? '#fff4cc' : '#ccffcc');
+                const priorityBadge = `<span style="font-size: 0.75em; margin-left: 8px; padding: 2px 6px; border-radius: 4px; background-color: ${priorityColor}; color: #333; text-transform: uppercase;">${priority}</span>`;
+
+                taskEl.innerHTML = `
+                    <label class="custom-checkbox">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                        <span class="checkmark"></span>
+                    </label>
+                    <span class="text">${escapeHtml(task.text)} ${priorityBadge}</span>
+                    <button class="delete-btn" aria-label="Delete task">✕</button>
+                `;
+
+                // Event Listeners
+                const checkbox = taskEl.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', () => toggleTask(task.id));
+
+                const deleteBtn = taskEl.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+                taskList.appendChild(taskEl);
+            });
         }
 
-        // 5. Render Items
-        filteredTasks.forEach(task => {
-            const taskEl = document.createElement('div');
-            taskEl.className = `task ${task.completed ? 'completed' : ''}`;
-            taskEl.dataset.id = task.id;
-
-            taskEl.innerHTML = `
-                <label class="custom-checkbox">
-                    <input type="checkbox" data-action="toggle" ${task.completed ? 'checked' : ''}>
-                    <span class="checkmark"></span>
-                </label>
-                <span class="text">${escapeHtml(task.text)}</span>
-                <button class="delete-btn" data-action="delete" aria-label="Delete task">✕</button>
-            `;
-
-            taskList.appendChild(taskEl);
-        });
+        updateStats();
     }
 
-    // Helper to prevent XSS
+    function addTask(text, priority) {
+        const newTask = {
+            id: Date.now(),
+            text: text,
+            completed: false,
+            priority: priority || 'medium'
+        };
+        tasks.unshift(newTask);
+        saveTasks();
+    }
+
+    function toggleTask(id) {
+        tasks = tasks.map(task =>
+            task.id === id ? { ...task, completed: !task.completed } : task
+        );
+        saveTasks();
+    }
+
+    function deleteTask(id) {
+        tasks = tasks.filter(task => task.id !== id);
+        saveTasks();
+    }
+
+    function updateStats() {
+        if (!taskStats) return;
+        const remaining = tasks.filter(t => !t.completed).length;
+        taskStats.innerHTML = `<span>${remaining} task${remaining !== 1 ? 's' : ''} remaining</span>`;
+    }
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    // --- Event Listeners ---
-
-    function setupEventListeners() {
-        // Form Submit
+    if (taskForm) {
         taskForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            addTask(taskInput.value);
-        });
-
-        // Task List Delegation (Toggle & Delete)
-        taskList.addEventListener('click', (e) => {
-            const target = e.target;
-            const taskEl = target.closest('.task');
-            if (!taskEl) return;
-
-            const id = taskEl.dataset.id;
-
-            if (target.dataset.action === 'delete' || target.closest('[data-action="delete"]')) {
-                deleteTask(id);
-            } else if (target.dataset.action === 'toggle' || target.closest('label')) {
-                // The change event on checkbox handles the toggle logic better usually, 
-                // but click delegation works too if we are careful. 
-                // Let's use the 'change' event for the checkbox specifically to be robust.
+            const text = taskInput.value.trim();
+            const priority = prioritySelect ? prioritySelect.value : 'medium';
+            if (text) {
+                addTask(text, priority);
+                taskInput.value = '';
+                if (prioritySelect) prioritySelect.value = 'medium';
             }
         });
-
-        // Better handling for checkbox toggle
-        taskList.addEventListener('change', (e) => {
-            if (e.target.dataset.action === 'toggle') {
-                const taskEl = e.target.closest('.task');
-                if (taskEl) {
-                    toggleTask(taskEl.dataset.id);
-                }
-            }
-        });
-
-        // Filters
-        filterButtons.all.addEventListener('click', () => setFilter('all'));
-        filterButtons.pending.addEventListener('click', () => setFilter('pending'));
-        filterButtons.completed.addEventListener('click', () => setFilter('completed'));
     }
 
-    // --- Initialization ---
+    // Filter Buttons
+    const filterAll = document.getElementById('filterAll');
+    if (filterAll) filterAll.addEventListener('click', (e) => {
+        setActiveFilter(e.target);
+        renderTasks('all');
+    });
 
-    function init() {
-        loadTasksFromStorage();
-        renderTasks();
-        setupEventListeners();
-        console.log('Task Manager App Initialized');
+    const filterPending = document.getElementById('filterPending');
+    if (filterPending) filterPending.addEventListener('click', (e) => {
+        setActiveFilter(e.target);
+        renderTasks('pending');
+    });
+
+    const filterCompleted = document.getElementById('filterCompleted');
+    if (filterCompleted) filterCompleted.addEventListener('click', (e) => {
+        setActiveFilter(e.target);
+        renderTasks('completed');
+    });
+
+    function setActiveFilter(btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
 
-    // Wait for DOM
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-
-    // --- Public API ---
-    window.App = {
-        addTask,
-        deleteTask,
-        toggleTask,
-        getTasks: () => [...tasks]
-    };
-
-})();
+    // Initial Render
+    renderTasks();
+});
